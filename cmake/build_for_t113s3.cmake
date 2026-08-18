@@ -7,10 +7,10 @@
 #   3. 回退          本机 tina-sdk 的默认绝对路径
 #
 # 工具链仓库（含编译器 + sysroot，可独立拉取）：
-#   https://github.com/ZhangKeLiang0627/eMP-t113-toolchain
+#   https://github.com/ZhangKeLiang0627/eMP-toolchain
 #
 # 用法示例：
-#   export T113_SDK=/path/to/eMP-t113-toolchain
+#   export T113_SDK=/path/to/eMP-toolchain
 #   export STAGING_DIR=$T113_SDK/sysroot
 #   cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_t113s3.cmake -DT113_SDK=$T113_SDK ..
 #

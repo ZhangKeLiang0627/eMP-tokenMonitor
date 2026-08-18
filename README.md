@@ -24,10 +24,10 @@ export STAGING_DIR=/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target
 方式二：**独立工具链仓库（无需完整 SDK）**：
 
 ```shell
-git clone https://github.com/ZhangKeLiang0627/eMP-t113-toolchain
-cd eMP-t113-toolchain && ./setup.sh        # 解压 toolchain/ 与 sysroot/
+git clone https://github.com/ZhangKeLiang0627/eMP-toolchain
+cd eMP-toolchain && ./setup.sh        # 解压 toolchain/ 与 sysroot/
 
-export T113_SDK=/path/to/eMP-t113-toolchain
+export T113_SDK=/path/to/eMP-toolchain
 export STAGING_DIR=$T113_SDK/sysroot
 # 之后 make CROSS=1 / cmake 交叉编译即可，无需 tina-sdk
 ```
@@ -83,7 +83,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_t113s3.cmake ..
 make -j32
 
 # 交叉编译（独立工具链，无 tina-sdk 时）
-export T113_SDK=/path/to/eMP-t113-toolchain
+export T113_SDK=/path/to/eMP-toolchain
 export STAGING_DIR=$T113_SDK/sysroot
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_t113s3.cmake -DT113_SDK=$T113_SDK ..

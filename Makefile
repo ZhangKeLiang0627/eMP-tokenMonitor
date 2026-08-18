@@ -14,8 +14,8 @@ CROSS ?= 0
 # ==============================================================================
 ifeq ($(CROSS), 1)
     # 工具链路径：默认指向本地 tina-sdk；设置 T113_SDK=<工具链仓库根> 可切换
-    # （例如从 https://github.com/ZhangKeLiang0627/eMP-t113-toolchain 拉取后：
-    #   export T113_SDK=/path/to/eMP-t113-toolchain
+    # （例如从 https://github.com/ZhangKeLiang0627/eMP-toolchain 拉取后：
+    #   export T113_SDK=/path/to/eMP-toolchain
     #   export STAGING_DIR=$(T113_SDK)/sysroot
     #   make CROSS=1 -j32）
     ifdef T113_SDK
