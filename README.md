@@ -14,10 +14,27 @@ DeepSeek Token / 余额监视器（LVGL 界面），面向 Allwinner T113-S3 板
 
 ## 环境
 
+方式一：完整 tina-sdk（已安装 SDK 的机器）：
+
 ```shell
 # 交叉编译需要（请按本机实际路径修改）
 export STAGING_DIR=/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target
 ```
+
+方式二：**独立工具链仓库（无需完整 SDK）**：
+
+```shell
+git clone https://github.com/ZhangKeLiang0627/eMP-t113-toolchain
+cd eMP-t113-toolchain && ./setup.sh        # 解压 toolchain/ 与 sysroot/
+
+export T113_SDK=/path/to/eMP-t113-toolchain
+export STAGING_DIR=$T113_SDK/sysroot
+# 之后 make CROSS=1 / cmake 交叉编译即可，无需 tina-sdk
+```
+
+> `T113_SDK` 设置后，Makefile 与 `cmake/build_for_t113s3.cmake` 自动使用
+> `$T113_SDK/toolchain/bin/`（编译器）与 `$T113_SDK/sysroot`（头文件/库），
+> 未设置时回退到本机 tina-sdk 绝对路径。
 
 本地编译依赖：
 
@@ -63,6 +80,13 @@ make -j32
 export STAGING_DIR=/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_t113s3.cmake ..
+make -j32
+
+# 交叉编译（独立工具链，无 tina-sdk 时）
+export T113_SDK=/path/to/eMP-t113-toolchain
+export STAGING_DIR=$T113_SDK/sysroot
+mkdir build && cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_t113s3.cmake -DT113_SDK=$T113_SDK ..
 make -j32
 ```
 

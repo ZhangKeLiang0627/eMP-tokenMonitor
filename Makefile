@@ -13,9 +13,24 @@ CROSS ?= 0
 # 交叉编译分支 (CROSS=1)
 # ==============================================================================
 ifeq ($(CROSS), 1)
+    # 工具链路径：默认指向本地 tina-sdk；设置 T113_SDK=<工具链仓库根> 可切换
+    # （例如从 https://github.com/ZhangKeLiang0627/eMP-t113-toolchain 拉取后：
+    #   export T113_SDK=/path/to/eMP-t113-toolchain
+    #   export STAGING_DIR=$(T113_SDK)/sysroot
+    #   make CROSS=1 -j32）
+    ifdef T113_SDK
+        TOOLCHAIN_DIR = $(T113_SDK)/toolchain/bin/
+        SYSROOT_DIR  = $(T113_SDK)/sysroot
+        FREETYPE_INC = $(SYSROOT_DIR)/usr/include/freetype2
+    else
+        TOOLCHAIN_DIR = /home/hugokkl/tina-sdk/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/
+        SYSROOT_DIR  = /home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target
+        FREETYPE_INC = /home/hugokkl/tina-sdk/out/t113-pi/compile_dir/target/freetype-2.13.2/include
+    endif
+
     # 编译器设置
-    CC = /home/hugokkl/tina-sdk/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-gcc
-    CXX = /home/hugokkl/tina-sdk/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-g++
+    CC = $(TOOLCHAIN_DIR)arm-openwrt-linux-gcc
+    CXX = $(TOOLCHAIN_DIR)arm-openwrt-linux-g++
 
     # 可执行文件名
     BIN = eMP_tokenMonitor
@@ -38,21 +53,21 @@ ifeq ($(CROSS), 1)
     CFLAGS += -DLODEPNG_NO_COMPILE_CPP
 
     # 头文件路径
-    CFLAGS += -I/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target/usr/include
-    CFLAGS += -I/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target/usr/include/allwinner
-    CFLAGS += -I/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target/usr/include/allwinner/include 
+    CFLAGS += -I$(SYSROOT_DIR)/usr/include
+    CFLAGS += -I$(SYSROOT_DIR)/usr/include/allwinner
+    CFLAGS += -I$(SYSROOT_DIR)/usr/include/allwinner/include 
     CFLAGS += -I$(PROJECT_DIR)/inc
     CFLAGS += -I$(PROJECT_DIR)/utils
     CFLAGS += -I$(PROJECT_DIR)/libs/cpp-httplib
-    CFLAGS += -I/home/hugokkl/tina-sdk/out/t113-pi/compile_dir/target/freetype-2.13.2/include
+    CFLAGS += -I$(FREETYPE_INC)
     CFLAGS += -I$(PROJECT_DIR)/libs/spdlog/include
 
     # 架构相关参数
     CFLAGS += -pipe -march=armv7-a -mtune=cortex-a7 -mfpu=neon -mfloat-abi=hard -fstack-protector  
 
     # 链接选项
-    LDFLAGS += -L/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target/lib
-    LDFLAGS += -L/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target/usr/lib  
+    LDFLAGS += -L$(SYSROOT_DIR)/lib
+    LDFLAGS += -L$(SYSROOT_DIR)/usr/lib  
     LDFLAGS += -lpthread -lstdc++ -lfreetype -lstdc++fs -lssl -lcrypto -lz -lbz2
 
     # 源文件收集
