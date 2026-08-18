@@ -5,8 +5,8 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 # 编译选项
 # Default to C99
 set(CMAKE_C_STANDARD 99)
-# Default to C++14
-set(CMAKE_CXX_STANDARD 11)
+# Default to C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 系统信息打印

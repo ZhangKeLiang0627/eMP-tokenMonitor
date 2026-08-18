@@ -44,7 +44,7 @@ ifeq ($(CROSS), 1)
     # 编译选项
     CFLAGS ?= -O3 -g0 -I$(LVGL_DIR)/ -Wall -Wno-unused-function -Wno-unused-variable -Wno-return-type -Wno-sign-compare -Wno-memset-transposed-args 
     LDFLAGS ?= -lm
-    CXXFLAGS ?= $(CFLAGS) -std=c++11
+    CXXFLAGS ?= $(CFLAGS) -std=c++17
 
     # httplib 开启 OpenSSL（HTTPS 请求需要）
     CFLAGS += -DCPPHTTPLIB_OPENSSL_SUPPORT
@@ -109,7 +109,7 @@ else
     # 编译选项
     CFLAGS ?= -O3 -g -I$(LVGL_DIR)/ -Wall -Wno-unused-function -Wno-unused-variable
 	CFLAGS += -DLV_USE_DRAW_SDL=0 -DUSE_SDL=1 -DUSE_MOUSE=1
-    CXXFLAGS ?= $(CFLAGS) -std=c++11
+    CXXFLAGS ?= $(CFLAGS) -std=c++17
 
     # httplib 开启 OpenSSL（HTTPS 请求需要）
     CFLAGS += -DCPPHTTPLIB_OPENSSL_SUPPORT
