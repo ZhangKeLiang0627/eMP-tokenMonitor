@@ -258,7 +258,10 @@ void View::balanceContCreate(lv_obj_t *obj)
     lv_obj_align(refreshBtn, LV_ALIGN_TOP_RIGHT, -12, 8);
     lv_obj_set_style_radius(refreshBtn, 255, LV_PART_MAIN);
     lv_obj_set_style_bg_color(refreshBtn, lv_color_hex(0x7d45ed), LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(refreshBtn, lv_color_hex(0x5c2fb8), LV_STATE_PRESSED);
+    // 按压时用更深的紫色，保证白色图标清晰；松开即回到默认色
+    lv_obj_set_style_bg_color(refreshBtn, lv_color_hex(0x3b1d8f), LV_STATE_PRESSED);
+    // 显式覆盖 btnCreate 的 FOCUSED 浅色（0xf2daaa），点击后焦点背景与默认一致
+    lv_obj_set_style_bg_color(refreshBtn, lv_color_hex(0x7d45ed), LV_STATE_FOCUSED);
     lv_obj_set_ext_click_area(refreshBtn, 10);
     ui.balanceCont.refreshBtn = refreshBtn;
     lv_obj_add_event_cb(refreshBtn, balanceContEventHandler, LV_EVENT_SHORT_CLICKED, this);
@@ -457,8 +460,8 @@ void View::setRefreshBusy(bool busy)
 {
     if (busy)
     {
-        // 只旋转按钮内的图标（refreshIcon），按钮本身保持不动
-        lv_anim_center_rotate(ui.balanceCont.refreshIcon, 3600 * 3, 3500);
+        // 只旋转按钮内的图标（refreshIcon），按钮本身保持不动；转 2 圈，缓进缓出（函数内部 ease_in_out）
+        lv_anim_center_rotate(ui.balanceCont.refreshIcon, 3600 * 2, 3500);
     }
 }
 
