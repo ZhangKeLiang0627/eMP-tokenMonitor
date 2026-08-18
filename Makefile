@@ -53,7 +53,7 @@ ifeq ($(CROSS), 1)
     # 链接选项
     LDFLAGS += -L/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target/lib
     LDFLAGS += -L/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target/usr/lib  
-    LDFLAGS += -ltplayer -lcdx_base -lncurses -lpthread -lstdc++ -lfreetype -lstdc++fs -lssl -lcrypto
+    LDFLAGS += -lpthread -lstdc++ -lfreetype -lstdc++fs -lssl -lcrypto -lz -lbz2
 
     # 源文件收集
     MAINSRC += ./main.cpp
