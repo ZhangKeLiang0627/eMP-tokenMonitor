@@ -1,0 +1,11 @@
+# 编译产物
+*.o
+build/
+eMP_tokenMonitor
+
+# 截图产物
+screenshot-*.png
+
+# 日志
+logs/
+*.log
