@@ -1,13 +1,15 @@
 # eMP_tokenMonitor
 
-DeepSeek Token / 余额监视器（LVGL 界面），沿用 [eMP-mainPage](https://github.com/ZhangKeLiang0627/eMP-mainPage) 与 [eMP-settings](https://github.com/ZhangKeLiang0627/eMP-settings) 的目录结构、编译规范与 UI 设计风格。
+DeepSeek Token / 余额监视器（LVGL 界面），面向 Allwinner T113-S3 板子与 PC 模拟器。
 
 ## 功能
 
 - 定时请求 DeepSeek 余额接口 `GET https://api.deepseek.com/user/balance`
 - 网络连通性检测（网络状态点实时显示）
 - 优雅展示：总余额、币种、赠金余额、充值余额、是否可用
-- 支持手动刷新、截图（Shot 按钮）
+- 支持手动刷新（只旋转按钮内图标，按钮本体不动）、截图（Shot 按钮）
+- **自动网络对时**（仅 ARM 编译启用）：板子无 RTC 时，启动立刻 + 每 60s 通过 HTTP 对时并 `settimeofday`，
+  免手动 `date -s`；HTTP 源先主后备（WorldTimeAPI `unixtime` → Baidu `Date` 头）
 - 基于 `cpp-httplib`（HTTPS）发起请求，`nlohmann/json` 解析响应
 
 ## 环境
@@ -55,6 +57,12 @@ sudo apt install build-essential libsdl2-dev libfreetype6-dev libncurses5-dev li
 # 本地编译
 mkdir build && cd build
 cmake ..
+make -j32
+
+# 交叉编译（目标板 T113-S3）
+export STAGING_DIR=/home/hugokkl/tina-sdk/out/t113-pi/staging_dir/target
+mkdir build && cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_t113s3.cmake ..
 make -j32
 ```
 
@@ -118,8 +126,9 @@ ssh root@<板子IP> "cd /mnt/UDISK && ./eMP_tokenMonitor"
 
 - `./config/eMP_tokenMonitor.json`：API Key 与拉取周期配置
 - `./src/Net/DeepSeekClient.cpp`：DeepSeek 余额请求（cpp-httplib + nlohmann/json）
-- `./src/Page/View.cpp`：界面（延续 eMP 系列风格）
-- `./src/Page/Model.cpp`：数据线程 / 定时刷新 / 状态管理
+- `./src/Net/TimeSync.cpp`：网络对时（WorldTimeAPI / Baidu Date 头，`settimeofday`）
+- `./src/Page/View.cpp`：界面（LVGL）
+- `./src/Page/Model.cpp`：数据线程 / 定时刷新 / 周期对时 / 状态管理
 
 ## 截图
 
