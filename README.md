@@ -109,7 +109,10 @@ ssh root@<板子IP> "cd /mnt/UDISK && ./eMP_tokenMonitor"
 - 依赖的动态库（板子已具备）：`libstdc++.so.6`(`/lib/`)、`libfreetype.so.6`、`libssl.so.1.1`、`libcrypto.so.1.1`、`libz.so.1`、`libbz2.so.1.0`、musl `libc`/`ld-musl-armhf`
 - 字体：`/mnt/UDISK/font/SmileySans.ttf`（FreeType 加载中文字体）
 - 实际运行日志：`wh=480x480, vwh=480x960, bpp=32` → `config loaded, key_len=35` → `fetchBalance: OK, infos=1, available=1` → 截图保存
-- **注意**：T113-S3 板子无 RTC，默认时钟为 1970，HTTPS 证书会因 "not yet valid" 失败。部署前需校时：`date -s "2026-08-18 13:00:00"`（或接 NTP），否则余额接口会返回 401/证书错误
+- **注意**：T113-S3 板子无 RTC，默认时钟为 1970，HTTPS 证书会因 "not yet valid" 失败。
+  **本应用已自带网络对时**：ARM 编译时启用，启动时立刻通过 `http://worldtimeapi.org/api/ip`
+  取 `unixtime`（失败则回退到 `http://www.baidu.com` 的 Date 响应头），然后 `settimeofday`；
+  之后数据线程每 60s 周期再对时一次。所以板子无需再手动 `date -s`。
 
 ## 文件
 

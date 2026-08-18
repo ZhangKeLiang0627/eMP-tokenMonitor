@@ -7,12 +7,14 @@
 #include <nlohmann/json.hpp>
 #include "../utils/log/log.h"
 #include "ResourcePool.h"
+#include "TimeSync.h"
 
 using nlohmann::json;
 
-#define CONFIG_FILE "./config/sysconfig.json"
+#define CONFIG_FILE "./config/eMP_tokenMonitor.json"
 #define NETWORK_PROBE_INTERVAL_SEC 3   // 轻量网络探测周期
 #define MIN_REFRESH_INTERVAL_SEC 5     // 最小拉取周期
+#define TIME_SYNC_INTERVAL_SEC 60      // 网络对时周期（ARM 无 RTC 板子）
 
 using namespace Page;
 
@@ -148,6 +150,12 @@ void Model::threadDataProcHandler(void)
 
     _client.setApiKey(_config.apiKey);
 
+#ifdef __arm__
+    // 无 RTC 板子：启动即对时一次，之后每 60s 周期对时（校正漂移 / 网络恢复后补对时）
+    uint32_t timeSyncCountdown = TIME_SYNC_INTERVAL_SEC;
+    Net::syncSystemTime();
+#endif
+
     // 启动后立即拉取一次
     fetchBalance();
 
@@ -158,6 +166,15 @@ void Model::threadDataProcHandler(void)
         std::this_thread::sleep_for(std::chrono::seconds(1));
         if (_threadExitFlag)
             break;
+
+#ifdef __arm__
+        // 周期网络对时（60s）
+        if (--timeSyncCountdown == 0)
+        {
+            timeSyncCountdown = TIME_SYNC_INTERVAL_SEC;
+            Net::syncSystemTime();
+        }
+#endif
 
         // 手动刷新请求优先处理
         if (_refreshRequested)

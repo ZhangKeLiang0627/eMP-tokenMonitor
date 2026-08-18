@@ -259,12 +259,18 @@ void View::balanceContCreate(lv_obj_t *obj)
     lv_obj_set_style_radius(refreshBtn, 255, LV_PART_MAIN);
     lv_obj_set_style_bg_color(refreshBtn, lv_color_hex(0x7d45ed), LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(refreshBtn, lv_color_hex(0x5c2fb8), LV_STATE_PRESSED);
-    lv_obj_set_style_bg_img_src(refreshBtn, LV_SYMBOL_REFRESH, LV_PART_MAIN);
-    lv_obj_set_style_text_font(refreshBtn, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(refreshBtn, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_ext_click_area(refreshBtn, 10);
     ui.balanceCont.refreshBtn = refreshBtn;
     lv_obj_add_event_cb(refreshBtn, balanceContEventHandler, LV_EVENT_SHORT_CLICKED, this);
+
+    // 刷新图标：单独的子 label，旋转只作用于它，按钮本身保持不动
+    lv_obj_t *refreshIcon = lv_label_create(refreshBtn);
+    lv_obj_remove_style_all(refreshIcon);
+    lv_obj_set_style_text_font(refreshIcon, &lv_font_montserrat_16, LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(refreshIcon, lv_color_white(), LV_STATE_DEFAULT);
+    lv_obj_center(refreshIcon);
+    lv_label_set_text(refreshIcon, LV_SYMBOL_REFRESH);
+    ui.balanceCont.refreshIcon = refreshIcon;
 
     // 大号余额
     lv_obj_t *valueLabel = lv_label_create(cont);
@@ -451,8 +457,8 @@ void View::setRefreshBusy(bool busy)
 {
     if (busy)
     {
-        // 旋转 3 圈，约 3.5 秒，模拟刷新过程
-        lv_anim_center_rotate(ui.balanceCont.refreshBtn, 3600 * 3, 3500);
+        // 只旋转按钮内的图标（refreshIcon），按钮本身保持不动
+        lv_anim_center_rotate(ui.balanceCont.refreshIcon, 3600 * 3, 3500);
     }
 }
 

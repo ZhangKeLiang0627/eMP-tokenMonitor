@@ -56,7 +56,8 @@ namespace Page
             struct
             {
                 lv_obj_t *cont;
-                lv_obj_t *refreshBtn; // 刷新按钮
+                lv_obj_t *refreshBtn;  // 刷新按钮
+                lv_obj_t *refreshIcon; // 按钮内的刷新图标（单独旋转）
                 lv_obj_t *titleLabel;
                 lv_obj_t *valueLabel;   // 大号余额
                 lv_obj_t *currencyLabel;
