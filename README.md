@@ -158,34 +158,3 @@ ssh root@<板子IP> "cd /mnt/UDISK && ./eMP_tokenMonitor"
 
 ![screenshot](./pictures/image-1.png)
 
-## 🔧 稳定性修复记录（2026-08-23）
-
-排查"无缘无故闪退"过程中，板端 `dmesg` 发现多次 `Out of memory: Killed process (eMP_tokenMonito)`（被杀时 anon-rss ≈ 80MB），确认根因是**内存泄漏累积触发内核 OOM killer**，并顺带修复了退出路径的并发崩溃。修复点如下：
-
-### 1. TLS 连接未复用 → 每次 HTTPS 请求泄漏内存（OOM 根因）
-
-- 现象：板端（TinaLinux + **OpenSSL 1.1.0i**）每次 `httplib::Client` 的 HTTPS 请求泄漏 ≈ 4-5KB；
-  复用同一 Client 后依然泄漏。实测：**复用 Client 时每次请求仍然新建 TCP/TLS 连接**（本地端口每次变化），
-  而裸 OpenSSL 单连接 keep-alive 发 80 个请求无额外泄漏 → 泄漏发生在"每次 TLS 建连"，与 OpenSSL 1.1.0i 库相关。
-- 根因：httplib 的 `is_ssl_peer_could_be_closed()` 用 `SSL_peek` 探测空闲连接；
-  旧版 OpenSSL（1.1.0i）在空闲 keep-alive 连接上 `SSL_peek` 返回 0 且 `SSL_get_error` 误报
-  `SSL_ERROR_ZERO_RETURN`，导致 httplib 认为对端已关闭 → 每次请求都重建连接 → 泄漏累积。
-- 修复：
-  - `libs/cpp-httplib/httplib.h`：`is_ssl_peer_could_be_closed()` 仅当底层 socket 有数据可读
-    （对端真正关闭/EOF）时才做 SSL 层探测，空闲连接一律视为存活（见函数内 `WorkBuddy patch` 注释）。
-  - `DeepSeekClient`：由"每次请求新建 Client"改为**单实例复用**（`getClient()` 惰性创建，
-    SSL_CTX 只建一次，keep-alive 连接可复用）。
-  - `TimeSync`：对时客户端同样改为 `static` 复用。
-  - 探测周期 3s → 10s，进一步降低建连频率。
-
-### 3. 退出路径竞态修复（double-free / use-after-free 闪退）
-
-- 现象：ASan 抓到两个错误——
-  - `double-free`：SIGTERM 等信号可递交给进程内任意线程，多个线程并发进入 `signalExitCallback` 并同时
-    调用 `exit(0)`，glibc exit handlers 双重执行。
-  - `heap-use-after-free`：退出时 `Model` 已析构，数据线程仍在访问 `DeepSeekClient::createClient()`。
-- 修复：
-  - `HAL.cpp`：`signalExitCallback` 用 `std::atomic_flag` 保证退出流程只执行一次。
-  - `main.cpp`：退出按钮回调不再 `delete model`（避免与数据线程/LVGL 线程并发析构），统一 `exit(0)` 由内核回收资源。
-
-> 验证：SDL 仿真（xvfb）运行正常、截图成功、SIGTERM 干净退出；T113-S3 板端长跑 RSS 稳定（见上文"已验证"）。
