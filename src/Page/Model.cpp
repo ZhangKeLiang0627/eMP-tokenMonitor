@@ -12,11 +12,38 @@
 using nlohmann::json;
 
 #define CONFIG_FILE "./config/eMP_tokenMonitor.json"
-#define NETWORK_PROBE_INTERVAL_SEC 3   // 轻量网络探测周期
+#define NETWORK_PROBE_INTERVAL_SEC 10  // 轻量网络探测周期（复用连接后无需过密探测）
 #define MIN_REFRESH_INTERVAL_SEC 5     // 最小拉取周期
 #define TIME_SYNC_INTERVAL_SEC 60      // 网络对时周期（ARM 无 RTC 板子）
 
+/* 内存看门狗：板端 OpenSSL 1.1.0i 每次 TLS 建连会泄漏少量内存，
+   即使已修复连接复用，仍保留兜底：RSS 超阈值时主动退出（有日志），
+   避免被内核 OOM killer 杀掉（无声无息、难以排查）。 */
+#define MEM_WATCH_INTERVAL_SEC 10   // 内存检查周期
+#define MEM_WARN_RSS_KB (60 * 1024) // 60MB 告警
+#define MEM_EXIT_RSS_KB (70 * 1024) // 70MB 主动退出（128MB 板子留足余量）
+
 using namespace Page;
+
+/* 读取当前进程 RSS（kB） */
+static size_t getRssKb(void)
+{
+    FILE *f = fopen("/proc/self/status", "r");
+    if (f == nullptr)
+        return 0;
+    char line[128];
+    size_t rss = 0;
+    while (fgets(line, sizeof(line), f) != nullptr)
+    {
+        if (strncmp(line, "VmRSS:", 6) == 0)
+        {
+            rss = (size_t)strtoul(line + 6, nullptr, 10);
+            break;
+        }
+    }
+    fclose(f);
+    return rss;
+}
 
 /**
  * @brief Model 构造函数
@@ -160,12 +187,33 @@ void Model::threadDataProcHandler(void)
     fetchBalance();
 
     uint32_t countdown = (uint32_t)_config.refreshIntervalSec;
+    uint32_t memWatchCountdown = MEM_WATCH_INTERVAL_SEC;
 
     while (!_threadExitFlag)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         if (_threadExitFlag)
             break;
+
+        // 内存看门狗（仅 ARM 板子启用，避免 OOM 被杀；PC 仿真内存充足且 ASan 会虚高 RSS）
+#ifdef __arm__
+        if (--memWatchCountdown == 0)
+        {
+            memWatchCountdown = MEM_WATCH_INTERVAL_SEC;
+            size_t rssKb = getRssKb();
+            if (rssKb >= MEM_EXIT_RSS_KB)
+            {
+                log_error("[Model] RSS=%zuKB exceeds %dKB, exit to avoid OOM killer!", rssKb, MEM_EXIT_RSS_KB);
+                // 留 1s 让异步日志落盘，再主动退出
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                exit(0);
+            }
+            else if (rssKb >= MEM_WARN_RSS_KB)
+            {
+                log_warn("[Model] RSS=%zuKB exceeds warn threshold %dKB", rssKb, MEM_WARN_RSS_KB);
+            }
+        }
+#endif
 
 #ifdef __arm__
         // 周期网络对时（60s）

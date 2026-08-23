@@ -71,10 +71,12 @@ bool syncSystemTime(void)
 {
     /* 方案 1：WorldTimeAPI，JSON 里直接带 unixtime（最省事） */
     {
-        httplib::Client cli("http://worldtimeapi.org");
+        // 复用静态客户端，避免每次对时重建连接对象（旧版 OpenSSL 下会累积泄漏）
+        static httplib::Client cli("http://worldtimeapi.org");
         cli.set_connection_timeout(5, 0);
         cli.set_read_timeout(5, 0);
         cli.set_follow_location(true);
+        cli.set_keep_alive(true); // 保持连接复用，减少建连
 
         auto res = cli.Get("/api/ip");
         if (res != nullptr && res->status == 200)
@@ -96,10 +98,11 @@ bool syncSystemTime(void)
 
     /* 方案 2（回退）：解析任意 HTTP 服务器的 Date 响应头（百度，国内可达性好） */
     {
-        httplib::Client cli("http://www.baidu.com");
+        static httplib::Client cli("http://www.baidu.com");
         cli.set_connection_timeout(5, 0);
         cli.set_read_timeout(5, 0);
         cli.set_follow_location(true);
+        cli.set_keep_alive(true); // 保持连接复用，减少建连
 
         auto res = cli.Get("/");
         if (res != nullptr)

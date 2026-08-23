@@ -17,6 +17,9 @@ DeepSeekClient::DeepSeekClient()
 
 DeepSeekClient::~DeepSeekClient()
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+    delete _client;
+    _client = nullptr;
 }
 
 void DeepSeekClient::setApiKey(const std::string &key)
@@ -26,20 +29,31 @@ void DeepSeekClient::setApiKey(const std::string &key)
 }
 
 /**
- * @brief 创建一个配置好超时的 httplib 客户端
+ * @brief 获取（必要时创建）复用的 httplib 客户端
+ * @note  客户端单实例复用：SSL_CTX 只创建一次、keep-alive 连接可复用，
+ *        避免频繁创建/销毁 SSL 上下文在旧版 OpenSSL（如 1.1.0i）下
+ *        每次连接泄漏内存，长期运行触发 OOM 被内核杀死的问题。
  */
-httplib::Client *DeepSeekClient::createClient()
+httplib::Client *DeepSeekClient::getClient()
 {
-    auto *cli = new httplib::Client(DEEPSEEK_HOST);
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_client == nullptr)
+    {
+        _client = new httplib::Client(DEEPSEEK_HOST);
 
-    // 证书校验默认开启，避免中间人攻击
-    cli->enable_server_certificate_verification(true);
-    cli->set_connection_timeout(CONNECT_TIMEOUT_SEC, 0);
-    cli->set_read_timeout(READ_TIMEOUT_SEC, 0);
-    cli->set_write_timeout(READ_TIMEOUT_SEC, 0);
-    cli->set_follow_location(true);
-
-    return cli;
+        // 证书校验默认开启，避免中间人攻击
+        _client->enable_server_certificate_verification(true);
+        _client->set_connection_timeout(CONNECT_TIMEOUT_SEC, 0);
+        _client->set_read_timeout(READ_TIMEOUT_SEC, 0);
+        _client->set_write_timeout(READ_TIMEOUT_SEC, 0);
+        _client->set_follow_location(true);
+        // 关键：httplib 客户端默认 keep_alive_=false 且请求头带 "Connection: close"，
+        // 每次请求都会新建 TLS 连接（板端 OpenSSL 1.1.0i 每次建连泄漏内存）。
+        // 显式开启 keep-alive，配合 httplib.h 中 is_ssl_peer_could_be_closed 的
+        // 兼容补丁，让连接真正复用。
+        _client->set_keep_alive(true);
+    }
+    return _client;
 }
 
 /**
@@ -55,9 +69,8 @@ bool DeepSeekClient::checkNetwork()
         key = _apiKey;
     }
 
-    std::unique_ptr<httplib::Client> cli(createClient());
-    cli->set_connection_timeout(3, 0);
-    cli->set_read_timeout(3, 0);
+    httplib::Client *cli = getClient();
+    // 复用客户端：超时统一用创建时的配置（5s 连接 / 10s 读写），不再单独覆盖
 
     httplib::Headers headers = {
         {"Accept", "application/json"},
@@ -100,7 +113,7 @@ FetchResult DeepSeekClient::fetchBalance()
         return result;
     }
 
-    std::unique_ptr<httplib::Client> cli(createClient());
+    httplib::Client *cli = getClient();
 
     httplib::Headers headers = {
         {"Accept", "application/json"},

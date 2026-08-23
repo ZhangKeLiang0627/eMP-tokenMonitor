@@ -1,5 +1,7 @@
 #include "HAL.h"
 
+#include <atomic>
+
 #ifdef __x86_64__
 #include "../libs/lv_drivers/sdl/sdl.h"
 #include "../libs/lv_drivers/indev/mouse.h"
@@ -108,6 +110,13 @@ void HAL::Init(void)
  */
 void signalExitCallback(int signal)
 {
+    // 信号会递交给进程内任意一个未阻塞该信号的线程，多个线程可能并发进入
+    // 本回调。用 atomic_flag 保证退出流程只执行一次，否则并发调用 exit(0)
+    // 会导致 glibc exit handlers 双重执行（double-free），表现为随机闪退。
+    static std::atomic_flag exitFlag = ATOMIC_FLAG_INIT;
+    if (exitFlag.test_and_set())
+        return;
+
     log_warn("[Sys] Got signal %d, exiting ...\n", signal);
 
 #ifdef __aarch64__

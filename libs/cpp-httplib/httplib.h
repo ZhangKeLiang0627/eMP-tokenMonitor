@@ -6235,12 +6235,20 @@ inline std::pair<std::string, std::string> make_digest_authentication_header(
 }
 
 inline bool is_ssl_peer_could_be_closed(SSL *ssl, socket_t sock) {
+  // WorkBuddy patch (2026-08-23):
+  // 旧版 OpenSSL(如 1.1.0i)在空闲 keep-alive 连接上调用 SSL_peek 会返回 0 且
+  // SSL_get_error 误报 SSL_ERROR_ZERO_RETURN，导致 httplib 每次请求都认为对端已
+  // 关闭连接而重建 TLS 连接。修复：仅当底层 socket 确实有数据可读(对端关闭/EOF)
+  // 时才做 SSL 层探测，空闲连接一律视为存活。
+  if (detail::select_read(sock, 0, 0) <= 0) {
+    return false;
+  }
   detail::set_nonblocking(sock, true);
   auto se = detail::scope_exit([&]() { detail::set_nonblocking(sock, false); });
 
   char buf[1];
-  return !SSL_peek(ssl, buf, 1) &&
-         SSL_get_error(ssl, 0) == SSL_ERROR_ZERO_RETURN;
+  auto n = SSL_peek(ssl, buf, 1);
+  return n == 0 && SSL_get_error(ssl, n) == SSL_ERROR_ZERO_RETURN;
 }
 
 #ifdef _WIN32

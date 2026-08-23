@@ -402,6 +402,11 @@ void View::footerContCreate(lv_obj_t *obj)
 
 void View::setNetwork(bool connected)
 {
+    if (_netInited && connected == _lastNetwork)
+        return;
+    _netInited = true;
+    _lastNetwork = connected;
+
     lv_obj_set_style_bg_color(ui.netCont.dot,
                               connected ? lv_color_hex(0x39d353) : lv_color_hex(0xff5252),
                               LV_PART_MAIN);
@@ -412,21 +417,33 @@ void View::setNetwork(bool connected)
 
 void View::setBalanceText(const char *text)
 {
+    if (_lastBalanceText == text)
+        return;
+    _lastBalanceText = text;
     lv_label_set_text(ui.balanceCont.valueLabel, text);
 }
 
 void View::setCurrencyText(const char *text)
 {
+    if (_lastCurrencyText == text)
+        return;
+    _lastCurrencyText = text;
     lv_label_set_text(ui.balanceCont.currencyLabel, text);
 }
 
 void View::setGrantedText(const char *text)
 {
+    if (_lastGrantedText == text)
+        return;
+    _lastGrantedText = text;
     lv_label_set_text(ui.detailCont.grantedValueLabel, text);
 }
 
 void View::setToppedText(const char *text)
 {
+    if (_lastToppedText == text)
+        return;
+    _lastToppedText = text;
     lv_label_set_text(ui.detailCont.toppedValueLabel, text);
 }
 
@@ -446,11 +463,18 @@ void View::setAvailable(bool available)
 
 void View::setStatusMessage(const char *msg)
 {
+    if (_lastStatusMsg == msg)
+        return;
+    _lastStatusMsg = msg;
     lv_label_set_text(ui.footerCont.msgLabel, msg);
 }
 
 void View::setLastUpdate(const char *text)
 {
+    if (_lastLastUpdate == text)
+        return;
+    _lastLastUpdate = text;
+
     char buf[64];
     lv_snprintf(buf, sizeof(buf), "%s%s", T("最后更新：", "Last update: "), text);
     lv_label_set_text(ui.footerCont.updateLabel, buf);

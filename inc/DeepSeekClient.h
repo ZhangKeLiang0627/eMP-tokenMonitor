@@ -71,9 +71,16 @@ namespace Net
         FetchResult fetchBalance();
 
     private:
-        httplib::Client *createClient();
+        /**
+         * @brief 获取复用客户端（首次调用时创建，进程生命周期内复用）
+         * @note  httplib::Client 支持 keep-alive 连接复用；单实例复用可避免
+         *        频繁创建/销毁 SSL_CTX 的开销与旧版 OpenSSL 下的内存泄漏。
+         *        仅数据线程调用，内部自带锁保护。
+         */
+        httplib::Client *getClient();
 
         std::string _apiKey;
-        std::mutex _mutex;
+        std::mutex _mutex;         // 保护 _apiKey 与 _client 的懒创建
+        httplib::Client *_client = nullptr; // 复用客户端（惰性创建）
     };
 }

@@ -33,10 +33,14 @@ int main(int argc, char *argv[])
 }
 
 /**
- * @brief 退出回调函数
+ * @brief 退出回调函数（由 UI 退出按钮触发，运行在 LVGL 线程）
+ * @note  不在回调里 delete model：Model 析构会 join 数据线程（可能阻塞在网络
+ *        调用上），且此时 detached 的 LVGL 线程仍在执行 lv_task_handler，
+ *        并发析构会触发 use-after-free / double-free，表现为随机闪退。
+ *        统一由 exit(0) 结束进程，资源交由内核回收。
  */
 static void exitCallback(void)
 {
-    delete model;
+    log_info("[Sys] exit requested, exiting ...");
     exit(0);
 }

@@ -6,6 +6,7 @@
 #include "../utils/Animations/Animations.h"
 #include "ResourcePool.h"
 #include <functional>
+#include <string>
 
 namespace Page
 {
@@ -23,6 +24,16 @@ namespace Page
     private:
         Operations _opts;      // View 回调函数集
         bool _useCjk = false;  // 是否成功加载中文字体
+
+        // 上次刷新的 UI 状态（避免状态未变化时反复 set_text 造成内存抖动）
+        bool _netInited = false;
+        bool _lastNetwork = false;
+        std::string _lastLastUpdate;
+        std::string _lastStatusMsg;
+        std::string _lastBalanceText;
+        std::string _lastCurrencyText;
+        std::string _lastGrantedText;
+        std::string _lastToppedText;
 
     public:
         struct
