@@ -178,7 +178,7 @@ ssh root@<板子IP> "cd /mnt/UDISK && ./eMP_tokenMonitor"
   - `TimeSync`：对时客户端同样改为 `static` 复用。
   - 探测周期 3s → 10s，进一步降低建连频率。
 
-### 2. 退出路径并发竞态（double-free / use-after-free 闪退）
+### 3. 退出路径竞态修复（double-free / use-after-free 闪退）
 
 - 现象：ASan 抓到两个错误——
   - `double-free`：SIGTERM 等信号可递交给进程内任意线程，多个线程并发进入 `signalExitCallback` 并同时
@@ -187,16 +187,5 @@ ssh root@<板子IP> "cd /mnt/UDISK && ./eMP_tokenMonitor"
 - 修复：
   - `HAL.cpp`：`signalExitCallback` 用 `std::atomic_flag` 保证退出流程只执行一次。
   - `main.cpp`：退出按钮回调不再 `delete model`（避免与数据线程/LVGL 线程并发析构），统一 `exit(0)` 由内核回收资源。
-
-### 3. 内存看门狗兜底
-
-- 板端 OpenSSL 1.1.0i 的库级泄漏无法彻底根除（SDK 自带老版本），新增进程内看门狗：
-  数据线程每 10s 读取 `/proc/self/status` 的 `VmRSS`，超过 60MB 告警、超过 70MB 主动 `exit(0)`
-  （留有日志，便于排查），避免被内核 OOM killer 静默杀死。
-
-### 4. UI 更新去重
-
-- `View::setNetwork/setBalanceText/setLastUpdate/setStatusMessage` 等仅在状态变化时刷新 label，
-  消除每 1s 定时器的 LVGL 文本分配/释放抖动。
 
 > 验证：SDL 仿真（xvfb）运行正常、截图成功、SIGTERM 干净退出；T113-S3 板端长跑 RSS 稳定（见上文"已验证"）。

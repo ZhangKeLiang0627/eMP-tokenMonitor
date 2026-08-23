@@ -76,8 +76,6 @@ Out of memory: Killed process 1443 (eMP_tokenMonito) ...
 | 5 | 探测降频 | `src/Page/Model.cpp` | `NETWORK_PROBE_INTERVAL_SEC` 3 → 10 |
 | 6 | 信号退出单次执行 | `src/HAL/HAL.cpp` | `std::atomic_flag` 保证 `signalExitCallback` 只执行一次 |
 | 7 | 退出不再 delete Model | `main.cpp` | 退出按钮回调统一 `exit(0)`，由内核回收资源，消除与数据线程/LVGL 线程的并发析构竞态 |
-| 8 | 内存看门狗（ARM） | `src/Page/Model.cpp` | 数据线程每 10s 读 `/proc/self/status` 的 VmRSS：>60MB 告警、>70MB 带日志主动退出，避免被 OOM killer 静默杀死 |
-| 9 | UI 更新去重 | `inc/View.h`、`src/Page/View.cpp` | 状态未变化时跳过 label 刷新，消除每秒 LVGL 文本分配/释放抖动 |
 
 ## 4. 验证结果
 
@@ -106,10 +104,9 @@ Out of memory: Killed process 1443 (eMP_tokenMonito) ...
 ### 4.3 预期效果
 
 - 连接建立频率：从"每请求 1 次"降为"每连接生命周期 1 次"，泄漏基本消除
-- 即使未来仍有缓慢累积，内存看门狗保证：**主动退出带日志**，不再被内核静默杀死
 
 ## 5. 遗留说明
 
 - 板端 OpenSSL 1.1.0i（2018 年）为 tina-sdk 自带，其库级泄漏无法通过应用层彻底根除；
-  本方案通过"连接复用 + 看门狗兜底"双保险解决实际问题
-- 若后续升级板端 OpenSSL 至 1.1.1+，可考虑移除看门狗（阈值宏位于 `src/Page/Model.cpp`）
+  本方案通过连接复用根治泄漏源头
+- 若后续升级板端 OpenSSL 至 1.1.1+，可进一步减少连接维护开销
