@@ -1,12 +1,12 @@
 # eMP_tokenMonitor
 
-DeepSeek Token / 余额监视器（LVGL 界面），面向 Allwinner T113-S3 板子与 PC 模拟器。
+DeepSeek Token / 余额监视器（LVGL v8.3.2 界面），面向 Allwinner T113-S3 板子与 PC 模拟器。
 
 ## 功能
 
 - 定时请求 DeepSeek 余额接口 `GET https://api.deepseek.com/user/balance`
 - 网络连通性检测（网络状态点实时显示）
-- 优雅展示：总余额、币种、赠金余额、充值余额、是否可用
+- 数据展示：总余额、币种、赠金余额、充值余额、是否可用
 - 支持手动刷新（只旋转按钮内图标，按钮本体不动）、截图（Shot 按钮）
 - **自动网络对时**（仅 ARM 编译启用）：板子无 RTC 时，启动立刻 + 每 60s 通过 HTTP 对时并 `settimeofday`，
   免手动 `date -s`；HTTP 源先主后备（WorldTimeAPI `unixtime` → Baidu `Date` 头）
@@ -131,20 +131,6 @@ ssh root@<板子IP> "cd /mnt/UDISK && ./eMP_tokenMonitor"
 ```
 
 无显示环境自测（自动截图）：`EMP_AUTOSHOT=<秒> ./eMP_tokenMonitor`，会在当前目录生成 `screenshot-*.png`。
-
-## ✅ 已验证：Allwinner T113-S3 板子
-
-已在 T113-S3（TinaLinux，`/mnt/UDISK` 部署，480×480 sunxifb 屏）上完整验证：
-
-- 交叉编译：`make CROSS=1 -j8` 产出 `eMP_tokenMonitor`（ARM 32-bit，musl 动态链接，约 1.7 MB）
-- 部署到 `/mnt/UDISK/eMP_tokenMonitor` + `/mnt/UDISK/config/eMP_tokenMonitor.json`
-- 依赖的动态库（板子已具备）：`libstdc++.so.6`(`/lib/`)、`libfreetype.so.6`、`libssl.so.1.1`、`libcrypto.so.1.1`、`libz.so.1`、`libbz2.so.1.0`、musl `libc`/`ld-musl-armhf`
-- 字体：`/mnt/UDISK/font/SmileySans.ttf`（FreeType 加载中文字体）
-- 实际运行日志：`wh=480x480, vwh=480x960, bpp=32` → `config loaded, key_len=35` → `fetchBalance: OK, infos=1, available=1` → 截图保存
-- **注意**：T113-S3 板子无 RTC，默认时钟为 1970，HTTPS 证书会因 "not yet valid" 失败。
-  **本应用已自带网络对时**：ARM 编译时启用，启动时立刻通过 `http://worldtimeapi.org/api/ip`
-  取 `unixtime`（失败则回退到 `http://www.baidu.com` 的 Date 响应头），然后 `settimeofday`；
-  之后数据线程每 60s 周期再对时一次。所以板子无需再手动 `date -s`。
 
 ## 文件
 
