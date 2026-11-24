@@ -105,6 +105,15 @@ void Model::update(void)
     std::string lastUpdate = _state.lastUpdateTime;
     std::string msg = _state.statusMsg;
 
+    std::time_t now = std::time(nullptr);
+    struct tm nowTm;
+    localtime_r(&now, &nowTm);
+    char dateBuf[16];
+    char timeBuf[16];
+    strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d", &nowTm);
+    strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S", &nowTm);
+
+    _view.setClock(dateBuf, timeBuf);
     _view.setNetwork(connected);
     _view.setLastUpdate(lastUpdate.c_str());
     _view.setStatusMessage(msg.c_str());

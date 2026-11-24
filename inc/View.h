@@ -51,6 +51,9 @@ namespace Page
                 lv_obj_t *cont;
                 lv_obj_t *dot;       // 网络状态点
                 lv_obj_t *valueLabel;
+                lv_obj_t *dateLabel; // 日期（右）
+                lv_obj_t *divider;   // 日期与时间之间的竖线
+                lv_obj_t *timeLabel; // 时分秒（右）
             } netCont;
 
             struct
@@ -66,7 +69,8 @@ namespace Page
 
             struct
             {
-                lv_obj_t *cont;
+                lv_obj_t *grantedCard;  // 赠金卡片
+                lv_obj_t *toppedCard;   // 充值卡片
                 lv_obj_t *grantedTitleLabel;
                 lv_obj_t *grantedValueLabel;
                 lv_obj_t *toppedTitleLabel;
@@ -90,6 +94,7 @@ namespace Page
 
         /* UI 更新接口（供 Model 调用） */
         void setNetwork(bool connected);
+        void setClock(const char *date, const char *time);
         void setBalanceText(const char *text);
         void setCurrencyText(const char *text);
         void setGrantedText(const char *text);

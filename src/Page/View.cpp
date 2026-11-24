@@ -46,7 +46,8 @@ void View::create(Operations &opts)
     lv_anim_timeline_wrapper_t wrapper[] =
         {
             ANIM_OPA_DEF(0, ui.balanceCont.cont),
-            ANIM_OPA_DEF(80, ui.detailCont.cont),
+            ANIM_OPA_DEF(80, ui.detailCont.grantedCard),
+            ANIM_OPA_DEF(80, ui.detailCont.toppedCard),
             ANIM_OPA_DEF(160, ui.netCont.cont),
             LV_ANIM_TIMELINE_WRAPPER_END
         };
@@ -202,22 +203,13 @@ void View::netContCreate(lv_obj_t *obj)
 {
     lv_obj_t *cont = lv_obj_create(obj);
     lv_obj_remove_style_all(cont);
-    lv_obj_set_size(cont, lv_pct(90), 40);
+    lv_obj_set_size(cont, lv_pct(90), 46);
     lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(cont, LV_OPA_80, LV_PART_MAIN);
     lv_obj_set_style_bg_color(cont, lv_color_hex(0x2b2b3a), LV_PART_MAIN);
-    lv_obj_align(cont, LV_ALIGN_TOP_MID, 0, 64);
+    lv_obj_align(cont, LV_ALIGN_TOP_MID, 0, 66);
     lv_obj_set_style_radius(cont, 12, LV_PART_MAIN);
     ui.netCont.cont = cont;
-
-    // 状态点
-    lv_obj_t *dot = lv_obj_create(cont);
-    lv_obj_remove_style_all(dot);
-    lv_obj_set_size(dot, 14, 14);
-    lv_obj_align(dot, LV_ALIGN_LEFT_MID, 14, 0);
-    lv_obj_set_style_radius(dot, 255, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(dot, lv_color_hex(0x888888), LV_PART_MAIN);
-    ui.netCont.dot = dot;
 
     // 状态文字
     lv_obj_t *valueLabel = lv_label_create(cont);
@@ -227,17 +219,57 @@ void View::netContCreate(lv_obj_t *obj)
     lv_obj_align(valueLabel, LV_ALIGN_LEFT_MID, 38, 0);
     lv_label_set_text(valueLabel, T("网络：检测中...", "Network: checking..."));
     ui.netCont.valueLabel = valueLabel;
+
+    // 状态指示灯：按文字行盒居中，光晕随状态变色
+    lv_obj_t *dot = lv_obj_create(cont);
+    lv_obj_remove_style_all(dot);
+    lv_obj_set_size(dot, 14, 14);
+    lv_obj_align_to(dot, valueLabel, LV_ALIGN_OUT_LEFT_MID, -10, -1);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(dot, lv_color_hex(0x888888), LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(dot, 10, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(dot, LV_OPA_40, LV_PART_MAIN);
+    lv_obj_set_style_shadow_color(dot, lv_color_hex(0x888888), LV_PART_MAIN);
+    ui.netCont.dot = dot;
+
+    // 时分秒（右对齐，其余两个对象依次向左排）
+    lv_obj_t *timeLabel = lv_label_create(cont);
+    lv_obj_remove_style_all(timeLabel);
+    lv_obj_set_style_text_font(timeLabel, fontMid(), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(timeLabel, lv_color_white(), LV_STATE_DEFAULT);
+    lv_obj_align(timeLabel, LV_ALIGN_RIGHT_MID, -14, 0);
+    lv_label_set_text(timeLabel, "--:--:--");
+    ui.netCont.timeLabel = timeLabel;
+
+    // 分隔竖线
+    lv_obj_t *divider = lv_obj_create(cont);
+    lv_obj_remove_style_all(divider);
+    lv_obj_set_size(divider, 1, 20);
+    lv_obj_align_to(divider, timeLabel, LV_ALIGN_OUT_LEFT_MID, -9, 0);
+    lv_obj_set_style_bg_opa(divider, LV_OPA_30, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(divider, lv_color_white(), LV_PART_MAIN);
+    ui.netCont.divider = divider;
+
+    // 日期
+    lv_obj_t *dateLabel = lv_label_create(cont);
+    lv_obj_remove_style_all(dateLabel);
+    lv_obj_set_style_text_font(dateLabel, fontMid(), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(dateLabel, lv_color_hex(0xb9b6c8), LV_STATE_DEFAULT);
+    lv_obj_align_to(dateLabel, divider, LV_ALIGN_OUT_LEFT_MID, -9, 0);
+    lv_label_set_text(dateLabel, "----.--.--");
+    ui.netCont.dateLabel = dateLabel;
 }
 
 void View::balanceContCreate(lv_obj_t *obj)
 {
     lv_obj_t *cont = lv_obj_create(obj);
     lv_obj_remove_style_all(cont);
-    lv_obj_set_size(cont, lv_pct(90), lv_pct(36));
+    lv_obj_set_size(cont, lv_pct(90), 176);
     lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(cont, lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_align(cont, LV_ALIGN_TOP_MID, 0, 116);
+    lv_obj_align(cont, LV_ALIGN_TOP_MID, 0, 124);
     lv_obj_set_style_radius(cont, 16, LV_PART_MAIN);
     lv_obj_set_style_shadow_width(cont, 20, LV_PART_MAIN);
     lv_obj_set_style_shadow_ofs_y(cont, 6, LV_PART_MAIN);
@@ -304,63 +336,63 @@ void View::balanceContCreate(lv_obj_t *obj)
 
 void View::detailContCreate(lv_obj_t *obj)
 {
-    lv_obj_t *cont = lv_obj_create(obj);
-    lv_obj_remove_style_all(cont);
-    lv_obj_set_size(cont, lv_pct(90), 74);
-    lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_bg_opa(cont, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_align(cont, LV_ALIGN_TOP_MID, 0, 306);
-    ui.detailCont.cont = cont;
-
     // 赠金卡片（左）
-    lv_obj_t *grantedCard = lv_obj_create(cont);
+    lv_obj_t *grantedCard = lv_obj_create(obj);
     lv_obj_remove_style_all(grantedCard);
-    lv_obj_set_size(grantedCard, lv_pct(48), lv_pct(100));
+    lv_obj_set_size(grantedCard, 207, 92);
     lv_obj_clear_flag(grantedCard, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(grantedCard, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(grantedCard, lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_align(grantedCard, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_obj_align(grantedCard, LV_ALIGN_TOP_LEFT, 24, 312);
     lv_obj_set_style_radius(grantedCard, 12, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(grantedCard, 20, LV_PART_MAIN);
+    lv_obj_set_style_shadow_ofs_y(grantedCard, 6, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(grantedCard, LV_OPA_20, LV_PART_MAIN);
+    ui.detailCont.grantedCard = grantedCard;
 
     lv_obj_t *grantedTitle = lv_label_create(grantedCard);
     lv_obj_remove_style_all(grantedTitle);
     lv_obj_set_style_text_font(grantedTitle, fontSmall(), LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(grantedTitle, lv_color_hex(0x888888), LV_STATE_DEFAULT);
-    lv_obj_align(grantedTitle, LV_ALIGN_TOP_MID, 0, 10);
+    lv_obj_align(grantedTitle, LV_ALIGN_TOP_MID, 0, 14);
     lv_label_set_text(grantedTitle, T("赠金余额", "Granted"));
     ui.detailCont.grantedTitleLabel = grantedTitle;
 
     lv_obj_t *grantedValue = lv_label_create(grantedCard);
     lv_obj_remove_style_all(grantedValue);
-    lv_obj_set_style_text_font(grantedValue, fontBig(), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(grantedValue, fontLarge(), LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(grantedValue, lv_color_hex(0x333333), LV_STATE_DEFAULT);
-    lv_obj_align(grantedValue, LV_ALIGN_CENTER, 0, 8);
+    lv_obj_align(grantedValue, LV_ALIGN_CENTER, 0, 10);
     lv_label_set_text(grantedValue, "--");
     ui.detailCont.grantedValueLabel = grantedValue;
 
     // 充值卡片（右）
-    lv_obj_t *toppedCard = lv_obj_create(cont);
+    lv_obj_t *toppedCard = lv_obj_create(obj);
     lv_obj_remove_style_all(toppedCard);
-    lv_obj_set_size(toppedCard, lv_pct(48), lv_pct(100));
+    lv_obj_set_size(toppedCard, 207, 92);
     lv_obj_clear_flag(toppedCard, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(toppedCard, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_bg_color(toppedCard, lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_align(toppedCard, LV_ALIGN_RIGHT_MID, 0, 0);
+    lv_obj_align(toppedCard, LV_ALIGN_TOP_RIGHT, -24, 312);
     lv_obj_set_style_radius(toppedCard, 12, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(toppedCard, 20, LV_PART_MAIN);
+    lv_obj_set_style_shadow_ofs_y(toppedCard, 6, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(toppedCard, LV_OPA_20, LV_PART_MAIN);
+    ui.detailCont.toppedCard = toppedCard;
 
     lv_obj_t *toppedTitle = lv_label_create(toppedCard);
     lv_obj_remove_style_all(toppedTitle);
     lv_obj_set_style_text_font(toppedTitle, fontSmall(), LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(toppedTitle, lv_color_hex(0x888888), LV_STATE_DEFAULT);
-    lv_obj_align(toppedTitle, LV_ALIGN_TOP_MID, 0, 10);
+    lv_obj_align(toppedTitle, LV_ALIGN_TOP_MID, 0, 14);
     lv_label_set_text(toppedTitle, T("充值余额", "Topped Up"));
     ui.detailCont.toppedTitleLabel = toppedTitle;
 
     lv_obj_t *toppedValue = lv_label_create(toppedCard);
     lv_obj_remove_style_all(toppedValue);
-    lv_obj_set_style_text_font(toppedValue, fontBig(), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(toppedValue, fontLarge(), LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(toppedValue, lv_color_hex(0x333333), LV_STATE_DEFAULT);
-    lv_obj_align(toppedValue, LV_ALIGN_CENTER, 0, 8);
+    lv_obj_align(toppedValue, LV_ALIGN_CENTER, 0, 10);
     lv_label_set_text(toppedValue, "--");
     ui.detailCont.toppedValueLabel = toppedValue;
 }
@@ -369,7 +401,7 @@ void View::footerContCreate(lv_obj_t *obj)
 {
     lv_obj_t *cont = lv_obj_create(obj);
     lv_obj_remove_style_all(cont);
-    lv_obj_set_size(cont, lv_pct(90), 44);
+    lv_obj_set_size(cont, lv_pct(90), 54);
     lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(cont, LV_OPA_80, LV_PART_MAIN);
     lv_obj_set_style_bg_color(cont, lv_color_hex(0x2b2b3a), LV_PART_MAIN);
@@ -391,6 +423,7 @@ void View::footerContCreate(lv_obj_t *obj)
     lv_obj_remove_style_all(msgLabel);
     lv_obj_set_style_text_font(msgLabel, fontSmall(), LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(msgLabel, lv_color_hex(0xffd76d), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(msgLabel, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
     lv_obj_set_width(msgLabel, lv_pct(45));
     lv_label_set_long_mode(msgLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_align(msgLabel, LV_ALIGN_RIGHT_MID, -12, 0);
@@ -402,12 +435,23 @@ void View::footerContCreate(lv_obj_t *obj)
 
 void View::setNetwork(bool connected)
 {
-    lv_obj_set_style_bg_color(ui.netCont.dot,
-                              connected ? lv_color_hex(0x39d353) : lv_color_hex(0xff5252),
-                              LV_PART_MAIN);
+    lv_color_t dotColor = connected ? lv_color_hex(0x39d353) : lv_color_hex(0xff5252);
+
+    lv_obj_set_style_bg_color(ui.netCont.dot, dotColor, LV_PART_MAIN);
+    lv_obj_set_style_shadow_color(ui.netCont.dot, dotColor, LV_PART_MAIN);
     lv_label_set_text(ui.netCont.valueLabel,
                       T(connected ? "网络：已连接" : "网络：未连接",
                         connected ? "Network: Connected" : "Network: Disconnected"));
+}
+
+void View::setClock(const char *date, const char *time)
+{
+    lv_label_set_text(ui.netCont.timeLabel, time);
+    lv_label_set_text(ui.netCont.dateLabel, date);
+
+    // 文本宽度变化时重新向右顶齐，保持时间贴右、日期在分隔线左侧
+    lv_obj_align_to(ui.netCont.divider, ui.netCont.timeLabel, LV_ALIGN_OUT_LEFT_MID, -9, 0);
+    lv_obj_align_to(ui.netCont.dateLabel, ui.netCont.divider, LV_ALIGN_OUT_LEFT_MID, -9, 0);
 }
 
 void View::setBalanceText(const char *text)
